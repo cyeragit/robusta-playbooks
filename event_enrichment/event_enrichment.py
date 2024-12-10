@@ -1,10 +1,10 @@
-from robusta.api import action, ActionParams, RobustaJob, EventChangeEvent, MarkdownBlock, JobChangeEvent, JobStatus, TableBlock, PodEvent, RobustaPod
+from robusta.api import action, ActionParams, RobustaJob, EventChangeEvent, MarkdownBlock, JobChangeEvent, JobStatus, \
+    TableBlock, PodEvent, RobustaPod
 from hikaru.model.rel_1_26.v1 import Pod, Job, CronJob
 from typing import Dict, Any, List, Tuple, Union
 from collections import defaultdict
 from string import Template
 import logging
-
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
@@ -23,17 +23,30 @@ def get_cluster_name(event: Union[EventChangeEvent, JobChangeEvent, PodEvent]) -
 
 
 @action
+def enrich_with_cluster_name(event: EventChangeEvent):
+    cluster_name = get_cluster_name(event)
+    if cluster_name:
+        labels["cluster"] = cluster_name
+        event.add_enrichment(
+            [MarkdownBlock(template.safe_substitute(labels))],
+        )
+
+@action
 def event_pod_label_enricher(event: EventChangeEvent, params: PodLabelTemplate):
-    logger.info(f"Enriching event with pod labels -> {event.obj.regarding.kind} - {event.obj.regarding.name} - {event.obj.regarding.namespace}")
+    logger.info(
+        f"Enriching event with pod labels -> {event.obj.regarding.kind} - {event.obj.regarding.name} - {event.obj.regarding.namespace}")
 
     relevant_event_obj = None
 
     if event.obj.regarding.kind == "Pod":
-        relevant_event_obj = Pod.readNamespacedPod(name=event.obj.regarding.name, namespace=event.obj.regarding.namespace).obj
+        relevant_event_obj = Pod.readNamespacedPod(name=event.obj.regarding.name,
+                                                   namespace=event.obj.regarding.namespace).obj
     elif event.obj.regarding.kind == "CronJob":
-        relevant_event_obj = CronJob.readNamespacedCronJob(name=event.obj.regarding.name, namespace=event.obj.regarding.namespace).obj
+        relevant_event_obj = CronJob.readNamespacedCronJob(name=event.obj.regarding.name,
+                                                           namespace=event.obj.regarding.namespace).obj
     elif event.obj.regarding.kind == "Job":
-        relevant_event_obj = Job.readNamespacedJob(name=event.obj.regarding.name, namespace=event.obj.regarding.namespace).obj
+        relevant_event_obj = Job.readNamespacedJob(name=event.obj.regarding.name,
+                                                   namespace=event.obj.regarding.namespace).obj
 
     if not relevant_event_obj:
         logger.info("Pod not found, skipping")
@@ -161,6 +174,7 @@ def policy_violation_enricher(event: EventChangeEvent):
         table_name="*Alert information*",
     )
     event.add_enrichment([table_block])
+
 
 def __job_status_str(job_status: JobStatus) -> Tuple[str, str]:
     if job_status.active:
