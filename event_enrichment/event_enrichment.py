@@ -36,6 +36,7 @@ def enrich_with_cluster_name(event: PodChangeEvent):
 
         labels["name"] = event_subject.name
         labels["namespace"] = event_subject.namespace
+        labels["cluster"] = cluster_name
         template = Template("")
 
         cluster_name = get_cluster_name(event)
@@ -51,6 +52,7 @@ def enrich_with_cluster_name(event: PodChangeEvent):
         event.add_enrichment(
             [MarkdownBlock(template.safe_substitute(labels))],
         )
+
 
 @action
 def event_pod_label_enricher(event: EventChangeEvent, params: PodLabelTemplate):
