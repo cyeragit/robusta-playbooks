@@ -25,20 +25,18 @@ def get_cluster_name(event: Union[EventChangeEvent, JobChangeEvent, PodEvent]) -
 @action
 def enrich_with_cluster_name(event: PodChangeEvent):
     print('==========================================================================================')
-    print(event)
+    print(event.get_subject())
     print('==========================================================================================')
     cluster_name = get_cluster_name(event)
     if cluster_name:
+        event_subject = event.get_subject()
         labels: Dict[str, Any] = defaultdict(lambda: "<missing>")
-        labels.update(event.metadata.labels)
-        labels.update(event.metadata.annotations)
-        if event.obj.regarding.kind == "CronJob":
-            logger.info(
-                f"Enriching cronjob labels -> {event.spec.jobTemplate.spec.template.metadata.labels}")
-            labels.update(event.spec.jobTemplate.spec.template.metadata.labels)
-        labels["name"] = event.metadata.name
-        labels["namespace"] = event.metadata.namespace
-        template = Template()
+        labels.update(event_subject.labels)
+        labels.update(event_subject.annotations)
+
+        labels["name"] = event_subject.name
+        labels["namespace"] = event_subject.namespace
+        template = Template("")
 
         cluster_name = get_cluster_name(event)
 
