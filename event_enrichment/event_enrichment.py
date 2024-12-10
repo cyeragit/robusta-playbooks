@@ -30,7 +30,7 @@ def enrich_with_cluster_name(event: PodChangeEvent):
     cluster_name = get_cluster_name(event)
     if cluster_name:
         event_subject = event.get_subject()
-        labels: Dict[str, Any] = defaultdict(lambda: "<missing>")
+        labels: Dict[str, Any] = {}
         labels.update(event_subject.labels)
         labels.update(event_subject.annotations)
 
