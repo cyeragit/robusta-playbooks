@@ -30,28 +30,21 @@ def enrich_with_cluster_name(event: PodChangeEvent):
     cluster_name = get_cluster_name(event)
     if cluster_name:
         event_subject = event.get_subject()
-        labels: Dict[str, Any] = {}
-        labels.update(event_subject.labels)
-        labels.update(event_subject.annotations)
-
-        labels["name"] = event_subject.name
-        labels["namespace"] = event_subject.namespace
-        labels["cluster"] = cluster_name
-        template = Template("")
 
         cluster_name = get_cluster_name(event)
 
-        for sink in event.named_sinks:
-            for finding in event.sink_findings[sink]:
-                finding.subject.labels.update(labels)
-                if cluster_name:
-                    labels["cluster"] = cluster_name
+        job_rows: List[List[str]] = [["cluster", cluster_name]]
 
-        print(f'Enriching event with labels: {labels}')
+        job_labels = [[key, value] for key, value in event_subject.labels.items()]
 
-        event.add_enrichment(
-            [MarkdownBlock(template.safe_substitute(labels))],
+        job_rows.extend(job_labels)
+
+        table_block = TableBlock(
+            job_rows,
+            ["description", "value"],
+            table_name="*Event enrichment*",
         )
+        event.add_enrichment([table_block])
 
 
 @action
