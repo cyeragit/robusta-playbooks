@@ -45,6 +45,8 @@ def enrich_with_cluster_name(event: PodChangeEvent):
                 if cluster_name:
                     labels["cluster"] = cluster_name
 
+        print(f'Enriching event with labels: {labels}')
+
         event.add_enrichment(
             [MarkdownBlock(template.safe_substitute(labels))],
         )
