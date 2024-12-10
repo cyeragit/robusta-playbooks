@@ -1,5 +1,5 @@
 from robusta.api import action, ActionParams, RobustaJob, EventChangeEvent, MarkdownBlock, JobChangeEvent, JobStatus, \
-    TableBlock, PodEvent, RobustaPod
+    TableBlock, PodEvent, RobustaPod, PodChangeEvent
 from hikaru.model.rel_1_26.v1 import Pod, Job, CronJob
 from typing import Dict, Any, List, Tuple, Union
 from collections import defaultdict
