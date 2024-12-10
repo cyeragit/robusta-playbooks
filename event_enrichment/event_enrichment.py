@@ -22,35 +22,35 @@ def get_cluster_name(event: Union[EventChangeEvent, JobChangeEvent, PodEvent]) -
     return None
 
 
-# @action
-# def enrich_with_cluster_name(event: PodChangeEvent):
-#     cluster_name = get_cluster_name(event)
-#     if cluster_name:
-#         labels: Dict[str, Any] = defaultdict(lambda: "<missing>")
-#         labels.update(relevant_event_obj.metadata.labels)
-#         labels.update(relevant_event_obj.metadata.annotations)
-#         if event.obj.regarding.kind == "CronJob":
-#             logger.info(
-#                 f"Enriching cronjob labels -> {relevant_event_obj.spec.jobTemplate.spec.template.metadata.labels}")
-#             labels.update(relevant_event_obj.spec.jobTemplate.spec.template.metadata.labels)
-#         labels["name"] = relevant_event_obj.metadata.name
-#         labels["namespace"] = relevant_event_obj.metadata.namespace
-#         template = Template(params.template)
-#
-#         cluster_name = get_cluster_name(event)
-#
-#         for sink in event.named_sinks:
-#             for finding in event.sink_findings[sink]:
-#                 finding.subject.labels.update(labels)
-#                 if cluster_name:
-#                     labels["cluster"] = cluster_name
-#
-#         event.add_enrichment(
-#             [MarkdownBlock(template.safe_substitute(labels))],
-#         )
+@action
+def enrich_with_cluster_name(event: PodChangeEvent):
+    cluster_name = get_cluster_name(event)
+    if cluster_name:
+        labels: Dict[str, Any] = defaultdict(lambda: "<missing>")
+        labels.update(event.metadata.labels)
+        labels.update(event.metadata.annotations)
+        if event.obj.regarding.kind == "CronJob":
+            logger.info(
+                f"Enriching cronjob labels -> {event.spec.jobTemplate.spec.template.metadata.labels}")
+            labels.update(event.spec.jobTemplate.spec.template.metadata.labels)
+        labels["name"] = event.metadata.name
+        labels["namespace"] = event.metadata.namespace
+        template = Template()
+
+        cluster_name = get_cluster_name(event)
+
+        for sink in event.named_sinks:
+            for finding in event.sink_findings[sink]:
+                finding.subject.labels.update(labels)
+                if cluster_name:
+                    labels["cluster"] = cluster_name
+
+        event.add_enrichment(
+            [MarkdownBlock(template.safe_substitute(labels))],
+        )
 
 @action
-def event_pod_label_enricher(event: Union[EventChangeEvent, PodChangeEvent], params: PodLabelTemplate):
+def event_pod_label_enricher(event: EventChangeEvent, params: PodLabelTemplate):
     logger.info(
         f"Enriching event with pod labels -> {event.obj.regarding.kind} - {event.obj.regarding.name} - {event.obj.regarding.namespace}")
 
