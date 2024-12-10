@@ -39,6 +39,8 @@ def enrich_with_cluster_name(event: PodChangeEvent):
 
         job_rows.extend(job_labels)
 
+        print(f'Event enrichment: {job_rows}')
+
         table_block = TableBlock(
             job_rows,
             ["description", "value"],
