@@ -24,6 +24,9 @@ def get_cluster_name(event: Union[EventChangeEvent, JobChangeEvent, PodEvent]) -
 
 @action
 def enrich_with_cluster_name(event: PodChangeEvent):
+    print('==========================================================================================')
+    print(event)
+    print('==========================================================================================')
     cluster_name = get_cluster_name(event)
     if cluster_name:
         labels: Dict[str, Any] = defaultdict(lambda: "<missing>")
