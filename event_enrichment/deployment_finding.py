@@ -1,3 +1,5 @@
+from typing import Optional
+
 from robusta.api import (
     ActionParams,
     Finding,
@@ -9,20 +11,24 @@ from robusta.api import (
 )
 
 
-class DeploymentOOMParams(ActionParams):
+class DeploymentFindingParams(ActionParams):
     """
     :var title: Finding title (supports $name, $namespace, $labels.X templating)
     :var aggregation_key: Key for grouping alerts
+    :var severity: Finding severity (DEBUG, INFO, LOW, HIGH). Default: HIGH
     """
-    title: str = "Deployment OOM - $labels.service"
-    aggregation_key: str = "DeploymentOOM"
+    title: str = "$labels.service"
+    aggregation_key: str = "DeploymentFinding"
+    severity: str = "HIGH"
 
 
 @action
-def deployment_oom_finding(event: PodEvent, params: DeploymentOOMParams):
+def create_deployment_finding(event: PodEvent, params: DeploymentFindingParams):
     """
-    Create an OOM finding grouped by deployment instead of pod.
-    Uses the 'service' label as the deployment identifier.
+    Create a finding grouped by deployment instead of pod.
+    
+    Uses the 'service' label (or 'app' as fallback) as the deployment identifier.
+    This changes the fingerprint so alerts from the same deployment are grouped together.
     """
     pod = event.get_pod()
     if not pod:
@@ -52,9 +58,8 @@ def deployment_oom_finding(event: PodEvent, params: DeploymentOOMParams):
         Finding(
             title=title,
             aggregation_key=params.aggregation_key,
-            severity=FindingSeverity.HIGH,
+            severity=FindingSeverity.from_severity(params.severity),
             subject=subject,
             source=event.get_source(),
         )
     )
-
