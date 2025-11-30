@@ -47,12 +47,20 @@ def create_deployment_finding(event: PodEvent, params: DeploymentFindingParams):
         labels=labels,
     )
 
-    # Simple title templating
+    # Title templating with fallbacks
     title = params.title
+    title = title.replace("$deployment", deployment_name)
     title = title.replace("$name", pod.metadata.name)
     title = title.replace("$namespace", pod.metadata.namespace)
+    
+    # Replace label placeholders, with fallback to deployment_name for missing labels
     for key, value in labels.items():
         title = title.replace(f"$labels.{key}", str(value))
+    
+    # Fallback: if $labels.X still in title (label was missing), use deployment_name
+    if "$labels." in title:
+        import re
+        title = re.sub(r"\$labels\.\w+", deployment_name, title)
 
     event.add_finding(
         Finding(
